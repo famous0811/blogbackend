@@ -1,7 +1,7 @@
 //login
 import { model, Schema } from "mongoose";
 
-const loginscheam = new Schema({
+const Adminscheam = new Schema({
   id: {
     type: String,
     required: true,
@@ -12,5 +12,5 @@ const loginscheam = new Schema({
   },
 });
 
-const Login = model("login", loginscheam);
-export default Login;
+const Admin = model("Admin", Adminscheam);
+export default Admin;

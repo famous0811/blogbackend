@@ -6,6 +6,7 @@ import * as bcrypt from "bcrypt-nodejs";
 import Admin from "../../models/admin";
 import Portfolio from "../../models/portfolio";
 import Interduce from "../../models/interduce";
+// import console = require("console");
 
 export const Login = async (req, res) => {
   const { id, password } = req.body;
@@ -15,19 +16,27 @@ export const Login = async (req, res) => {
       bcrypt.compare(password, result.password, function (err, value) {
         if (value == true) {
           //비밀번호O
-          let token = jwt.sign(
-            {
-              id: result.id,
-            },
-            process.env.jwtpassword,
-            {
-              expiresIn: 44640,
+          // let token = jwt.sign(
+          //   {
+          //     id: result.id,
+          //   },
+          //   process.env.jwtpassword,
+          //   {
+          //     expiresIn: 44640,
+          //   },(err, token) => {
+          //     console.error("error :",err);
+          //   }
+          // );
+          const token = jwt.sign({  id: result.id }, 'secret-key', { expiresIn: 44640, }, (err, token) => {
+            if(err) {
+              console.error("error :",err);
+                return;
             }
-          );
-          return res
+            return res
             .status(200)
-            .send({ state: true, result: "로그인이 되셨습니다.", token: token })
+            .send({ state: true, result: "로그인이 되셨습니다.", data: token })
             .end();
+        });
         } else {
           Send(res, 200, "비밀번호가 일치하지 않습니다.");
         }
@@ -40,8 +49,9 @@ export const Login = async (req, res) => {
 
 export const SignUp = async (req, res) => {
   const { id, password } = req.body;
-
+  console.log(id, password);
   Admin.findOne({ id: id }, async function (err, result) {
+    console.log(result);
     if (err) throw err;
     if (result == null) {
       bcrypt.hash(password, null, null, async function (err, hash) {
@@ -54,7 +64,7 @@ export const SignUp = async (req, res) => {
           .then((data) => {
             return res
               .status(200)
-              .Send({ state: true, result: "어드민 계정 등록 완료" });
+              .send({ state: true, data: "어드민 계정 등록 완료" }).end();
           })
           .catch((err) => Send(res, 403, "DB 저장 실패"));
       });

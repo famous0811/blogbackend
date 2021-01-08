@@ -15,10 +15,26 @@ export function SendGuestbook(req,res){
     });
 }
 
-export function Sendinterduce(res,req) {
+export function Sendinterduce(req,res) {
     // return Send(res,"200",Interduce);
+    Interduce.find({},function(err, result){
+        var r = result.reverse();
+        console.log(r);
+        // return Send(res,200,"성공?",true,r);
+       return res.status(200).send({ state: true, result:"send data",data:r}).end();
+    }).catch(err =>{
+        return Send(res,200,"error");
+    });
 }
 
-export function SendPortfolio(res,req) {
+export function SendPortfolio(req,res) {
     // return Send(res,200,Portfolio);
+    Portfolio.find({},function(err, result){
+        var r = result.reverse();
+        // console.log(r);
+        // return Send(res,200,"성공?",true,r);
+       return res.status(200).send({ state: true, result:"send data",data:r}).end();
+    }).catch(err =>{
+        return Send(res,200,"error");
+    });
 }
