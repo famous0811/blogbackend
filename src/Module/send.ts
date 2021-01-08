@@ -1,8 +1,8 @@
-function Send(res,status,data) {
+function Send(res, status: number, result?: string, state?: boolean, data?: any) {
     res
-    .status(status)
-    .send({ data })
-    .end()
-}
-
-export default Send;
+      .status(status)
+      .send({ result, state, data })
+      .end()
+  }
+  export default Send
+  

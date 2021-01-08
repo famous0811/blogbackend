@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose"
 
 export const guestSchema=new Schema({
-    user_id: { type:String,
+    userId: { type:String,
         required: true
     },
     text:{ type:String, required: true},
