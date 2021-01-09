@@ -6,7 +6,6 @@ import * as bcrypt from "bcrypt-nodejs";
 import Admin from "../../models/admin";
 import Portfolio from "../../models/portfolio";
 import Interduce from "../../models/interduce";
-// import console = require("console");
 
 export const Login = async (req, res) => {
   const { id, password } = req.body;
@@ -15,28 +14,25 @@ export const Login = async (req, res) => {
     if (result != null) {
       bcrypt.compare(password, result.password, function (err, value) {
         if (value == true) {
-          //비밀번호O
-          // let token = jwt.sign(
-          //   {
-          //     id: result.id,
-          //   },
-          //   process.env.jwtpassword,
-          //   {
-          //     expiresIn: 44640,
-          //   },(err, token) => {
-          //     console.error("error :",err);
-          //   }
-          // );
-          const token = jwt.sign({  id: result.id }, 'secret-key', { expiresIn: 44640, }, (err, token) => {
-            if(err) {
-              console.error("error :",err);
+          const token = jwt.sign(
+            { id: result.id },
+            "secret-key",
+            { expiresIn: 44640 },
+            (err, token) => {
+              if (err) {
+                console.error("error :", err);
                 return;
+              }
+              return res
+                .status(200)
+                .send({
+                  state: true,
+                  result: "로그인이 되셨습니다.",
+                  data: token,
+                })
+                .end();
             }
-            return res
-            .status(200)
-            .send({ state: true, result: "로그인이 되셨습니다.", data: token })
-            .end();
-        });
+          );
         } else {
           Send(res, 200, "비밀번호가 일치하지 않습니다.");
         }
@@ -64,7 +60,8 @@ export const SignUp = async (req, res) => {
           .then((data) => {
             return res
               .status(200)
-              .send({ state: true, data: "어드민 계정 등록 완료" }).end();
+              .send({ state: true, data: "어드민 계정 등록 완료" })
+              .end();
           })
           .catch((err) => Send(res, 403, "DB 저장 실패"));
       });
@@ -75,27 +72,40 @@ export const SignUp = async (req, res) => {
 };
 
 export const Token = async (req, res) => {
-  const { token } = req.body;
-  console.log("토큰 :", token);
-
+  const token = req.headers.authorization;
   if (!token) {
-    return Send(res, 403, "토큰이 없습니다.");
+    return Send(res, 200, "token is fail");
   }
-  let decoded = jwt.verify(token, process.env.jwtpassword);
-  Admin.findOne({ id: decoded.id }, function (err, result) {
-    if (result) {
-      return res
-        .status(200)
-        .send({ result: "인증성공", state: true, admin: true, data: result });
-    } else {
-      return Send(res, 200, "인증실패.");
-    }
+
+  jwt.verify(token, "secret-key", function (err, decoded) {
+    if (err && decoded === undefined)
+      return Send(res, 200, "token is fail");
+    
+    Admin.findOne({ id: decoded.id }, function (err, result) {
+      if (result) {
+        return res
+          .status(200)
+          .send({
+            result: "인증성공",
+            state: true,
+            data: "wellcome allblack",
+          })
+          .end();
+      } else {
+        return Send(res, 200, "token is fail");
+      }
+    });
   });
 };
 
 export const Makeportfolio = async (req, res) => {
   const { img, eng, kor, title } = req.body;
-
+  const token = req.headers.authorization;
+  // console.log("valhe:", img, eng, kor, title);
+  if (!token) {
+    return Send(res, 403, "토큰이 없습니다.");
+  }
+  
   const newPortfolio = new Portfolio({
     img,
     eng,
@@ -116,7 +126,7 @@ export const Makeportfolio = async (req, res) => {
 export const Amendportfolio = async (req, res) => {
   const { id, img, eng, kor, title } = req.body;
 
-  Portfolio.findOne({_id:id}, function (err, result) {
+  Portfolio.findOne({ _id: id }, function (err, result) {
     result.img = img;
     result.eng = eng;
     result.kor = kor;
@@ -128,6 +138,7 @@ export const Amendportfolio = async (req, res) => {
 
 export const Makeinterduce = async (req, res) => {
   const { welcome, skills, portfolios, contacts, othersites } = req.body;
+  console.log("value :",welcome, skills, portfolios, contacts, othersites);
 
   const newinterduce = new Interduce({
     welcome,
@@ -150,7 +161,7 @@ export const Makeinterduce = async (req, res) => {
 export const Amendinterduce = async (req, res) => {
   const { id, welcome, skills, portfolios, contacts, othersites } = req.body;
 
-  Interduce.findOne({_id:id}, function (err, result) {
+  Interduce.findOne({ _id: id }, function (err, result) {
     result.welcome = welcome;
     result.skills = skills;
     result.portfolios = portfolios;
