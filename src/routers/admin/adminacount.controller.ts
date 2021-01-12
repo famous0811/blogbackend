@@ -6,6 +6,8 @@ import * as bcrypt from "bcrypt-nodejs";
 import Admin from "../../models/admin";
 import Portfolio from "../../models/portfolio";
 import Interduce from "../../models/interduce";
+import console = require("console");
+import { Document } from "mongoose";
 
 export const Login = async (req, res) => {
   const { id, password } = req.body;
@@ -78,9 +80,8 @@ export const Token = async (req, res) => {
   }
 
   jwt.verify(token, "secret-key", function (err, decoded) {
-    if (err && decoded === undefined)
-      return Send(res, 200, "token is fail");
-    
+    if (err && decoded === undefined) return Send(res, 200, "token is fail");
+
     Admin.findOne({ id: decoded.id }, function (err, result) {
       if (result) {
         return res
@@ -105,7 +106,7 @@ export const Makeportfolio = async (req, res) => {
   if (!token) {
     return Send(res, 403, "토큰이 없습니다.");
   }
-  
+
   const newPortfolio = new Portfolio({
     img,
     eng,
@@ -125,20 +126,24 @@ export const Makeportfolio = async (req, res) => {
 
 export const Amendportfolio = async (req, res) => {
   const { id, img, eng, kor, title } = req.body;
-
+  // console.log(id, img, eng, kor, title);
+  console.log(id);
   Portfolio.findOne({ _id: id }, function (err, result) {
-    result.img = img;
-    result.eng = eng;
-    result.kor = kor;
-    result.title = title;
-    result.save();
-    console.log("save");
+    if (err) throw err;
+    if (result != null) {
+      result.img = img;
+      result.eng = eng;
+      result.kor = kor;
+      result.title = title;
+      result.save();
+      return res.status(200).send({ state: true, result: "change" });
+    }
   });
 };
 
 export const Makeinterduce = async (req, res) => {
   const { welcome, skills, portfolios, contacts, othersites } = req.body;
-  console.log("value :",welcome, skills, portfolios, contacts, othersites);
+  console.log("value :", welcome, skills, portfolios, contacts, othersites);
 
   const newinterduce = new Interduce({
     welcome,
@@ -159,15 +164,45 @@ export const Makeinterduce = async (req, res) => {
 };
 
 export const Amendinterduce = async (req, res) => {
-  const { id, welcome, skills, portfolios, contacts, othersites } = req.body;
-
-  Interduce.findOne({ _id: id }, function (err, result) {
-    result.welcome = welcome;
-    result.skills = skills;
-    result.portfolios = portfolios;
-    result.contacts = contacts;
-    result.othersites = othersites;
-    result.save();
-    console.log("save");
+  const { welcome, skills, contacts, otherinformations } = req.body;
+Portfolio.find({},function(err, result){
+ const newportfolios=result.map((data:any)=>{
+    return {id:data._id,title:data.title}
   });
+  // Interduce.find({});
+  // console.log(Interduce.find({}));
+  Interduce.find({}, function(err, result){
+    
+    if (result!==[]) {
+      console.log(result);
+      console.log("result",result===[ ]);
+      // result.welcome = welcome;
+      //   result.skills = skills;
+      //   result.portfolios = portfolios;
+      //   result.contacts = contacts;
+      //   result.othersites = othersites;
+      //   result.save();
+      return res.status(200).send({ state: true, result: "change" });
+    }
+    else{
+      // console.log("make");
+      const newinterduce = new Interduce({
+        welcome,
+        skills,
+        newportfolios,
+        contacts,
+        otherinformations,
+      });
+    
+      newinterduce
+        .save()
+        .then(() => {
+          Send(res, 200, "newinterduce make");
+        })
+        .catch((err) => {
+          Send(res, 403, "newinterduce error");
+        });
+    }
+  });
+})
 };
