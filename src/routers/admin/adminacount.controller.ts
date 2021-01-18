@@ -6,8 +6,6 @@ import * as bcrypt from "bcrypt-nodejs";
 import Admin from "../../models/admin";
 import Portfolio from "../../models/portfolio";
 import Interduce from "../../models/interduce";
-import console = require("console");
-import { Document } from "mongoose";
 
 export const Login = async (req, res) => {
   const { id, password } = req.body;
@@ -127,6 +125,10 @@ export const Makeportfolio = async (req, res) => {
 export const Amendportfolio = async (req, res) => {
   const { id, img, eng, kor, title } = req.body;
   // console.log(id, img, eng, kor, title);
+  const token = req.headers.authorization;
+  if (!token) {
+    return Send(res, 403, "토큰이 없습니다.");
+  }
   console.log(id);
   Portfolio.findOne({ _id: id }, function (err, result) {
     if (err) throw err;
@@ -142,15 +144,17 @@ export const Amendportfolio = async (req, res) => {
 };
 
 export const Makeinterduce = async (req, res) => {
-  const { welcome, skills, portfolios, contacts, othersites } = req.body;
-  console.log("value :", welcome, skills, portfolios, contacts, othersites);
-
+  const { welcome, skills, portfolios, otherinformations } = req.body;
+  console.log("value :", welcome, skills, portfolios, otherinformations);
+  const token = req.headers.authorization;
+  if (!token) {
+    return Send(res, 403, "토큰이 없습니다.");
+  }
   const newinterduce = new Interduce({
-    welcome,
+    wlecome: welcome,
     skills,
+    otherinformations,
     portfolios,
-    contacts,
-    othersites,
   });
 
   await newinterduce
@@ -159,50 +163,30 @@ export const Makeinterduce = async (req, res) => {
       Send(res, 200, "newinterduce make");
     })
     .catch((err) => {
-      Send(res, 403, "newinterduce error");
+      console.log(err);
+      Send(res, 200, "err");
     });
 };
 
 export const Amendinterduce = async (req, res) => {
-  const { welcome, skills, contacts, otherinformations } = req.body;
-Portfolio.find({},function(err, result){
- const newportfolios=result.map((data:any)=>{
-    return {id:data._id,title:data.title}
-  });
-  // Interduce.find({});
-  // console.log(Interduce.find({}));
-  Interduce.find({}, function(err, result){
-    
-    if (result!==[]) {
-      console.log(result);
-      console.log("result",result===[ ]);
-      // result.welcome = welcome;
-      //   result.skills = skills;
-      //   result.portfolios = portfolios;
-      //   result.contacts = contacts;
-      //   result.othersites = othersites;
-      //   result.save();
+  const { welcome, skills, otherinformations } = req.body;
+  const token = req.headers.authorization;
+  if (!token) {
+    return Send(res, 403, "토큰이 없습니다.");
+  }
+  Portfolio.find({}, function (err, result) {
+    const newportfolios = result.map((data: any) => {
+      return { id: data._id, title: data.title };
+    });
+    // Interduce.find({});
+    // console.log(Interduce.find({}));
+    Interduce.find({}, function (err, result:any) {
+      result.welcome = welcome;
+      result.skills = skills;
+      result.portfolios=newportfolios;
+      result.otherinformations = otherinformations;
+      result.save();
       return res.status(200).send({ state: true, result: "change" });
-    }
-    else{
-      // console.log("make");
-      const newinterduce = new Interduce({
-        welcome,
-        skills,
-        newportfolios,
-        contacts,
-        otherinformations,
-      });
-    
-      newinterduce
-        .save()
-        .then(() => {
-          Send(res, 200, "newinterduce make");
-        })
-        .catch((err) => {
-          Send(res, 403, "newinterduce error");
-        });
-    }
+    });
   });
-})
 };
